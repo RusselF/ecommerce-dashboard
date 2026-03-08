@@ -1,8 +1,11 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { CartProvider } from './context/CartContext'
 import { ProtectedRoute } from './components/common/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import ProductsPage from './pages/ProductsPage'
+import CategoriesPage from './pages/CategoriesPage'
 
 const Placeholder = ({ title }) => (
   <div className="p-8">
@@ -14,19 +17,22 @@ const Placeholder = ({ title }) => (
 export default function App() {
   return (
     <AuthProvider>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route element={<ProtectedRoute />}>
-          <Route path="/products" element={<Placeholder title="Products" />} />
-          <Route path="/cart" element={<Placeholder title="Cart" />} />
-        </Route>
-        <Route element={<ProtectedRoute adminOnly />}>
-          <Route path="/dashboard" element={<Placeholder title="Dashboard" />} />
-          <Route path="/orders" element={<Placeholder title="Orders" />} />
-        </Route>
-        <Route path="/" element={<Navigate to="/products" replace />} />
-      </Routes>
+      <CartProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/products" element={<ProductsPage />} />
+            <Route path="/cart" element={<Placeholder title="Cart" />} />
+          </Route>
+          <Route element={<ProtectedRoute adminOnly />}>
+            <Route path="/dashboard" element={<Placeholder title="Dashboard" />} />
+            <Route path="/orders" element={<Placeholder title="Orders" />} />
+            <Route path="/categories" element={<CategoriesPage />} />
+          </Route>
+          <Route path="/" element={<Navigate to="/products" replace />} />
+        </Routes>
+      </CartProvider>
     </AuthProvider>
   )
 }

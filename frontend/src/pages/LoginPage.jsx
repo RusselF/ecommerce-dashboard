@@ -16,6 +16,7 @@ export default function LoginPage() {
       const user = await login(form.email, form.password)
       toast.success(`Welcome back, ${user.name}!`)
       navigate(user.role === 'admin' ? '/dashboard' : '/products')
+      // navigate('/products')
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed')
     } finally {
