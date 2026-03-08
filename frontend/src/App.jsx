@@ -7,7 +7,8 @@ import RegisterPage from './pages/RegisterPage'
 import ProductsPage from './pages/ProductsPage'
 import CategoriesPage from './pages/CategoriesPage'
 import CartPage from './pages/CartPage'
-
+import OrdersPage from './pages/OrdersPage'
+import DashboardPage from './pages/DashboardPage'
 const Placeholder = ({ title }) => (
   <div className="p-8">
     <h1 className="text-2xl font-bold">{title}</h1>
@@ -27,7 +28,7 @@ export default function App() {
             <Route path="/cart" element={<CartPage />} />
           </Route>
           <Route element={<ProtectedRoute adminOnly />}>
-            <Route path="/dashboard" element={<Placeholder title="Dashboard" />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/categories" element={<CategoriesPage />} />
           </Route>
