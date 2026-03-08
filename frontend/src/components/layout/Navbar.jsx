@@ -1,10 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useCart } from '../../context/CartContext'
 import { ShoppingCart, LayoutDashboard, Package, ClipboardList, LogOut, Tag } from 'lucide-react'
 
 export default function Navbar() {
   const { user, logout, isAdmin } = useAuth()
   const navigate = useNavigate()
+  const { count } = useCart()
 
   const handleLogout = () => {
     logout()
@@ -19,8 +21,14 @@ export default function Navbar() {
           <Link to="/products" className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors">
             <Package size={16} /> Products
           </Link>
-          <Link to="/cart" className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors">
-            <ShoppingCart size={16} /> Cart
+          <Link to="/cart" className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors relative">
+            <ShoppingCart size={16} />
+            Cart
+            {count > 0 && (
+              <span className="absolute -top-2 -right-3 bg-blue-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                {count}
+              </span>
+            )}
           </Link>
           {isAdmin && (
             <>
