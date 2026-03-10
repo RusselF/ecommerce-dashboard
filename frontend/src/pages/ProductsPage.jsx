@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
+import { useNavigate } from 'react-router-dom'
 import Layout from '../components/layout/Layout'
 import api from '../services/api'
 import toast from 'react-hot-toast'
 import { Plus, Search, Pencil, Trash2, ShoppingCart } from 'lucide-react'
+import LoginModal from '../components/common/LoginModal'
+import ProductSkeleton from '../components/common/ProductSkeleton'
 
 export default function ProductsPage() {
-  const { isAdmin } = useAuth()
+  const { isAdmin, user } = useAuth()
   const { addItem } = useCart()
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
@@ -16,15 +19,21 @@ export default function ProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editProduct, setEditProduct] = useState(null)
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [page, setPage] = useState(1)
+  const [totalProducts, setTotalProducts] = useState(0)
+  const LIMIT = 8
+  const navigate = useNavigate()
   const [form, setForm] = useState({ name: '', description: '', price: '', stock: '', image_url: '', category_id: '' })
 
   const fetchProducts = async () => {
     try {
-      const params = {}
+      const params = { page, limit: LIMIT }
       if (search) params.search = search
       if (categoryFilter) params.category_id = categoryFilter
       const { data } = await api.get('/products', { params })
       setProducts(data.products)
+      setTotalProducts(data.total || 0)
     } catch {
       toast.error('Gagal memuat produk')
     } finally {
@@ -39,9 +48,11 @@ export default function ProductsPage() {
 
   useEffect(() => { fetchCategories() }, [])
   useEffect(() => {
-    const timeout = setTimeout(fetchProducts, 300)
-    return () => clearTimeout(timeout)
-  }, [search, categoryFilter])
+  const timeout = setTimeout(fetchProducts, 300)
+  return () => clearTimeout(timeout)
+  }, [search, categoryFilter, page])
+
+  useEffect(() => { setPage(1) }, [search, categoryFilter])
 
   const openCreate = () => {
     setEditProduct(null)
@@ -127,13 +138,15 @@ export default function ProductsPage() {
 
       {/* Product Grid */}
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Loading...</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {[...Array(8)].map((_, i) => <ProductSkeleton key={i} />)}
+        </div>
       ) : products.length === 0 ? (
         <div className="text-center py-12 text-gray-500">No products found</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {products.map(product => (
-            <div key={product.id} className="card flex flex-col">
+            <div key={product.id} className="card flex flex-col cursor-pointer" onClick={() => navigate(`/products/${product.id}`)}>
               {product.image_url ? (
                 <img src={product.image_url} alt={product.name} className="w-full h-40 object-cover rounded-lg mb-3" />
               ) : (
@@ -152,16 +165,21 @@ export default function ProductsPage() {
                 <div className="flex gap-2">
                   {isAdmin ? (
                     <>
-                      <button onClick={() => openEdit(product)} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                      <button onClick={(e) => { e.stopPropagation(); openEdit(product) }} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                         <Pencil size={15} />
                       </button>
-                      <button onClick={() => handleDelete(product.id)} className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                      <button onClick={(e) => { e.stopPropagation(); handleDelete(product.id) }} className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                         <Trash2 size={15} />
                       </button>
                     </>
                   ) : (
                     <button
-                      onClick={() => { addItem(product); toast.success('Added to cart!') }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (!user) { setShowLoginModal(true); return }
+                        addItem(product)
+                        toast.success('Added to cart!')
+                      }}
                       disabled={product.stock === 0}
                       className="btn-primary flex items-center gap-1.5 text-sm py-1.5"
                     >
@@ -173,6 +191,39 @@ export default function ProductsPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalProducts > LIMIT && (
+        <div className="flex items-center justify-center gap-2 mt-8">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            ← Prev
+          </button>
+          {[...Array(Math.ceil(totalProducts / LIMIT))].map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setPage(i + 1)}
+              className={`w-9 h-9 text-sm rounded-lg transition-colors ${
+                page === i + 1
+                  ? 'bg-blue-600 text-white'
+                  : 'border border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            onClick={() => setPage(p => p + 1)}
+            disabled={page >= Math.ceil(totalProducts / LIMIT)}
+            className="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Next →
+          </button>
         </div>
       )}
 
@@ -219,6 +270,7 @@ export default function ProductsPage() {
           </div>
         </div>
       )}
+    {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
     </Layout>
   )
 }

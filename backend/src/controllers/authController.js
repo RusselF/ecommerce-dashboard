@@ -66,3 +66,32 @@ async function saveRefreshToken(userId, token) {
     [userId, token, expiresAt]
   )
 }
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, email } = req.body
+    const { rows } = await pool.query(
+      'UPDATE users SET name=$1, email=$2 WHERE id=$3 RETURNING id, name, email, role',
+      [name, email, req.user.id]
+    )
+    res.json(rows[0])
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const updatePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body
+    const { rows } = await pool.query('SELECT * FROM users WHERE id=$1', [req.user.id])
+    const user = rows[0]
+    if (!(await bcrypt.compare(currentPassword, user.password))) {
+      return res.status(401).json({ message: 'Password lama salah' })
+    }
+    const hashed = await bcrypt.hash(newPassword, 10)
+    await pool.query('UPDATE users SET password=$1 WHERE id=$2', [hashed, req.user.id])
+    res.json({ message: 'Password updated' })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}

@@ -4,6 +4,23 @@ export const getProducts = async (req, res) => {
   try {
     const { search, category_id, page = 1, limit = 10 } = req.query
     const offset = (page - 1) * limit
+
+    // Count query untuk pagination
+    let countQuery = `
+      SELECT COUNT(*) FROM products p WHERE 1=1
+    `
+    const countParams = []
+    if (search) {
+      countParams.push(`%${search}%`)
+      countQuery += ` AND (p.name ILIKE $${countParams.length} OR p.description ILIKE $${countParams.length})`
+    }
+    if (category_id) {
+      countParams.push(category_id)
+      countQuery += ` AND p.category_id = $${countParams.length}`
+    }
+    const countResult = await pool.query(countQuery, countParams)
+
+    // Main query
     let query = `
       SELECT p.*, c.name as category_name
       FROM products p
@@ -21,8 +38,15 @@ export const getProducts = async (req, res) => {
     }
     query += ` ORDER BY p.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`
     params.push(limit, offset)
+
     const { rows } = await pool.query(query, params)
-    res.json({ products: rows, page: Number(page), limit: Number(limit) })
+
+    res.json({
+      products: rows,
+      page: Number(page),
+      limit: Number(limit),
+      total: Number(countResult.rows[0].count)
+    })
   } catch (err) {
     res.status(500).json({ message: err.message })
   }

@@ -21,15 +21,17 @@ export default function Navbar() {
           <Link to="/products" className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors">
             <Package size={16} /> Products
           </Link>
-          <Link to="/cart" className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors relative">
-            <ShoppingCart size={16} />
-            Cart
-            {count > 0 && (
-              <span className="absolute -top-2 -right-3 bg-blue-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                {count}
-              </span>
-            )}
-          </Link>
+          {user && (
+            <Link to="/cart" className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors relative">
+              <ShoppingCart size={16} />
+              Cart
+              {count > 0 && (
+                <span className="absolute -top-2 -right-3 bg-blue-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                  {count}
+                </span>
+              )}
+            </Link>
+          )}
           {isAdmin && (
             <>
               <Link to="/dashboard" className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors">
@@ -46,10 +48,25 @@ export default function Navbar() {
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-sm text-gray-500">{user?.name}</span>
-        <button onClick={handleLogout} className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-600 transition-colors">
-          <LogOut size={16} /> Logout
-        </button>
+        {user ? (
+          <>
+            <Link to="/profile" className="text-sm text-gray-500 hover:text-blue-600 transition-colors">
+              {user.name}
+            </Link>
+            <button onClick={handleLogout} className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-600 transition-colors">
+              <LogOut size={16} /> Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" className="text-sm text-gray-600 hover:text-blue-600 transition-colors font-medium">
+              Sign In
+            </Link>
+            <Link to="/register" className="btn-primary text-sm py-1.5 px-4">
+              Register
+            </Link>
+          </>
+        )}
       </div>
     </nav>
   )
